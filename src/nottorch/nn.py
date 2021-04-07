@@ -27,6 +27,25 @@ class MSELoss(Loss):
 
         return 2*(yhat - y)
     
+    
+class BCELoss(Loss):
+
+    def __init__(self, eps=1e-10):
+        self.eps=eps
+
+    def forward(self, y, yhat):
+        
+        assert y.shape == yhat.shape
+        
+        return -np.mean(y.T @ np.log(yhat+self.eps) +
+                (1-y).T @ np.log(1-yhat+self.eps))
+
+    def backward(self, y, yhat):
+
+        assert y.shape == yhat.shape
+
+        return yhat - y
+    
 
 
 class Module(object):
@@ -115,8 +134,7 @@ class Linear(Module):
         self._gradients["W"] += A.T @ dZ / batch_size
         self._gradients["b"] += dZ.mean(0)
 
-
-        return dZ @ self._parameters["W"]
+        return dZ @ self._parameters["W"].T
 
     def update_parameters(self, gradient_step=1e-3):
 
@@ -147,6 +165,9 @@ class Sigmoid(Module):
         A = self.forward(Z)
         dZ = (A*(1-A)) * dA
         return dZ
+    
+    def update_parameters(self, gradient_step=1e-3):
+        return
 
 
     
@@ -170,6 +191,9 @@ class Tanh(Module):
         A = self.forward(Z)
         return 1 - np.square(A)
     
+    def update_parameters(self, gradient_step=1e-3):
+        return
+    
     
     
 class ReLU(Module):
@@ -190,3 +214,6 @@ class ReLU(Module):
 
     def backward_delta(self, Z, dA):
         return dA * (Z < 0)
+    
+    def update_parameters(self, gradient_step=1e-3):
+        return

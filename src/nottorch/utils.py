@@ -1,6 +1,6 @@
 from . import nn
 import numpy as np
-from sklearn.datasets import make_regression, load_diabetes
+from sklearn.datasets import make_regression, load_diabetes, make_classification
 import matplotlib.pyplot as plt
 
 
@@ -11,6 +11,19 @@ def plot_losses(losses):
     plt.show()
     
 
+def generate_classif(n_samples=100, n_features=2, n_classes=2, n_clusters_per_class=1):
+    
+    
+    X, Y = make_classification(n_samples=n_samples,
+                               n_features=n_features,
+                               n_classes=n_classes,
+                               n_clusters_per_class=n_clusters_per_class,
+                               n_redundant=0,
+                               class_sep=1.5)
+    #X, Y = load_diabetes(return_X_y=True)
+    
+    return X, Y.reshape(-1, 1)
+
 def generate_linear(n_samples=100, n_features=1, bias=True):
     
     
@@ -19,6 +32,11 @@ def generate_linear(n_samples=100, n_features=1, bias=True):
     
     return X, Y.reshape(-1, 1)
 
+
+def show2DdataClassif(X, Y):
+    
+    plt.scatter(X[:, 0], X[:, 1], c=Y, cmap="Set1")    
+    plt.show()
 
 def show2Ddata(X, Y, W=None, b=None):
     
