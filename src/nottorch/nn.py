@@ -153,9 +153,8 @@ class Linear(Module):
         self._parameters = {}
         self._gradients = {}
 
-        self._parameters["W"] = np.random.randn(
-            in_dim, out_dim) * np.sqrt(2.0 / in_dim)
-        self._parameters["b"] = np.ones((1, out_dim))
+        self._parameters["W"] = np.random.randn(in_dim,out_dim) * np.sqrt(2.0 / in_dim)
+        self._parameters["b"] = np.zeros((1, out_dim))
 
         return
 
@@ -171,7 +170,6 @@ class Linear(Module):
     def zero_grad(self):
 
         if self._gradients is not None:
-
             self._gradients["W"] = np.zeros(self._parameters["W"].shape)
             self._gradients["b"] = np.zeros(self._parameters["b"].shape)
 
@@ -186,7 +184,7 @@ class Linear(Module):
         batch_size = dZ.shape[0]
 
         self._gradients["W"] += A.T @ dZ / batch_size
-        self._gradients["b"] += dZ.mean(0)
+        self._gradients["b"] += dZ.mean(0, keepdims=True)
 
         return dZ @ self._parameters["W"].T
 
@@ -232,7 +230,7 @@ class Tanh(Module):
         super().__init__()
 
     def forward(self, X):
-        return 2.0 / (1 + np.exp(-2*X)) - 1
+        return 2.0 / (1.0 + np.exp(-2.0*X)) - 1.0
             
 
     def backward_update_gradient(self, Z, dA):
@@ -243,7 +241,7 @@ class Tanh(Module):
 
     def backward_delta(self, Z, dA, lr=1e-3):
         A = self.forward(Z)
-        return 1 - np.square(A)
+        return (1.0 - np.square(A)) * dA
     
     def update_parameters(self, gradient_step=1e-3):
         return
@@ -267,7 +265,7 @@ class ReLU(Module):
         return dZ
 
     def backward_delta(self, Z, dA):
-        return dA * (Z <= 0.0)
+        return dA * (Z > 0.0)
     
     def update_parameters(self, gradient_step=1e-3):
         return
