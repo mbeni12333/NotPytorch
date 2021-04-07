@@ -2,6 +2,12 @@ import numpy as np
 import pickle as pk
 
 
+class F():
+    
+    def sigmoid(X):
+        return 1.0 / (1.0 + np.exp(-X))
+
+
 class Loss(object):
     def forward(self, y, yhat):
         pass
@@ -37,12 +43,16 @@ class BCELoss(Loss):
         
         assert y.shape == yhat.shape
         
+        yhat = 1.0 / (1.0 + np.exp(-yhat))
+        
         return -np.mean(y.T @ np.log(yhat+self.eps) +
-                (1-y).T @ np.log(1-yhat+self.eps))
+                (1-y).T @ np.log(1.0-yhat+self.eps))
 
     def backward(self, y, yhat):
 
         assert y.shape == yhat.shape
+
+        yhat = 1.0 / (1.0 + np.exp(-yhat))
 
         return yhat - y
     
@@ -81,13 +91,57 @@ class Module(object):
         # Calcule la mise a jour des parametres selon le gradient calcule et le pas de gradient_step
         self._parameters -= gradient_step*self._gradient
 
-    def backward_update_gradient(self, input, delta):
+    def backward_update_gradient(self, input, delta, lr=1e-3):
         # Met a jour la valeur du gradient
         pass
 
     def backward_delta(self, X, dZ):
         # Calcul la derivee de l'erreur
         pass
+
+
+class Sequential(Module):
+    
+    def __init__(self, Modules):
+        super().__init__()
+        self.layers = Modules
+        self._out = {}
+
+    def forward(self, X):
+        self._out = {}
+        self._out[-1] = X
+        
+        for i, layer in enumerate(self.layers):
+            if i == 0:
+                out = layer(X)
+            else:
+                out = layer(out)
+            
+            self._out[i] = out
+
+        return out
+
+    def zero_grad(self):
+        for i, layer in enumerate(self.layers):
+            layer.zero_grad()
+
+    def backward_update_gradient(self, input_in, grad_in, lr=1e-3):
+        dX = self.backward_delta(input_in, grad_in)
+        self.update_parameters(lr)
+        
+        return dX
+
+    def backward_delta(self, input_in, grad_in):
+        
+        for i, layer in reversed(list(enumerate(self.layers))):
+            grad_out = layer.backward_delta(self._out[i-1], grad_in)
+            grad_in = grad_out
+            
+        return grad_out
+
+    def update_parameters(self, lr=1e-3):
+        for i, layer in enumerate(self.layers):
+            layer.update_parameters(lr)
 
 
 class Linear(Module):
@@ -100,7 +154,7 @@ class Linear(Module):
         self._gradients = {}
 
         self._parameters["W"] = np.random.randn(
-            in_dim, out_dim) * np.sqrt(2 / in_dim)
+            in_dim, out_dim) * np.sqrt(2.0 / in_dim)
         self._parameters["b"] = np.ones((1, out_dim))
 
         return
@@ -121,9 +175,9 @@ class Linear(Module):
             self._gradients["W"] = np.zeros(self._parameters["W"].shape)
             self._gradients["b"] = np.zeros(self._parameters["b"].shape)
 
-    def backward_update_gradient(self, A, dZ):
+    def backward_update_gradient(self, A, dZ, lr=1e-5):
         dA = self.backward_delta(A, dZ)
-        self.update_parameters()
+        self.update_parameters(lr)
         
         return dA
 
@@ -151,7 +205,7 @@ class Sigmoid(Module):
         super().__init__()
 
     def forward(self, X):
-        return 1.0 / (1 + np.exp(-X))
+        return 1.0 / (1.0 + np.exp(-X))
           
 
     def backward_update_gradient(self, Z, dA):
@@ -187,7 +241,7 @@ class Tanh(Module):
         
         return dZ
 
-    def backward_delta(self, Z, dA):
+    def backward_delta(self, Z, dA, lr=1e-3):
         A = self.forward(Z)
         return 1 - np.square(A)
     
@@ -206,14 +260,14 @@ class ReLU(Module):
         return np.maximum(0, X)
             
 
-    def backward_update_gradient(self, Z, dA):
+    def backward_update_gradient(self, Z, dA, lr=1e-3):
         dZ = self.backward_delta(Z, dA)
         self.update_parameters()
         
         return dZ
 
     def backward_delta(self, Z, dA):
-        return dA * (Z < 0)
+        return dA * (Z <= 0.0)
     
     def update_parameters(self, gradient_step=1e-3):
         return
