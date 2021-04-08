@@ -3,6 +3,7 @@ from src.nottorch.Datasets.loader import *
 from src import nottorch
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
 
 # In[] model linear
 
@@ -124,15 +125,86 @@ import numpy as np
 
 # In[]
 
+# alltrainx,alltrainy = load_usps("train")
+# alltestx,alltesty = load_usps("test")
+# neg, pos = 5, 6
+
+# trainx,trainy = get_usps([neg,pos],alltrainx,alltrainy)
+# testx,testy = get_usps([neg,pos],alltestx,alltesty)
+
+# mu = trainx.mean(axis=0)
+# sig = trainx.std(axis=0)
+
+# trainx = (trainx - mu)/sig
+# testx = (testx - mu)/sig
+
+# trainy = np.where(trainy == pos, 1, 0)
+# testy = np.where(testy == pos, 1, 0)
+
+# show_usps(datax, datay, rows=16, cols=32)
+
+
+
+# epochs = 1000
+
+# model = nn.Sequential([nn.Linear(256, 128),
+#                        nn.ReLU(),
+#                        nn.Linear(128, 64),
+#                        nn.ReLU(),
+#                        nn.Linear(64, 1)])
+
+
+# Criterion = nn.BCELoss()
+
+
+# losses = utils.train(model, trainx, trainy, Criterion, epochs=epochs, print_every=10)
+
+
+# utils.plot_losses((losses))
+
+
+# yhat = np.where(nn.F.sigmoid(model(testx)) >= 0.5, 1, 0)
+# utils.plot_report(testy, yhat, [neg, pos])
+
+# In[]
+
 alltrainx,alltrainy = load_usps("train")
 alltestx,alltesty = load_usps("test")
-neg, pos = 5, 6
-
-datax,datay = get_usps([neg,pos],alltrainx,alltrainy)
-testx,testy = get_usps([neg,pos],alltestx,alltesty)
 
 
-datay = np.where(datay == pos, 1, 0)
-testy = np.where(testy == pos, 1, 0)
+trainx,trainy = get_usps(list(range(10)),alltrainx,alltrainy)
+testx,testy = get_usps(list(range(10)),alltestx,alltesty)
 
-show_usps(datax, datay, rows=16, cols=32)
+show_usps(trainx, trainy, rows=16, cols=32)
+
+mu = trainx.mean(axis=0)
+sig = trainx.std(axis=0)
+
+trainx = (trainx - mu)/sig
+testx = (testx - mu)/sig
+
+# trainy = utils.one_hot_encode(trainy, 10)
+# testy = utils.one_hot_encode(testy, 10)
+
+show_usps(trainx, trainy, rows=16, cols=32)
+
+# In[]
+epochs = 1000
+
+model = nn.Sequential([nn.Linear(256, 64),
+                       nn.ReLU(),
+                       nn.Linear(64, 10)])
+
+
+Criterion = nn.CCELoss()
+
+
+losses = utils.train(model, trainx, trainy, Criterion, lr=0.1, epochs=epochs, print_every=100)
+
+
+utils.plot_losses((losses))
+
+
+yhat = np.argmax(nn.F.softmax(model(testx)), axis=1)
+utils.plot_report(testy, yhat, list(range(10)))
+

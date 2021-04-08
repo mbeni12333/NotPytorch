@@ -1,9 +1,30 @@
-from . import nn
 import numpy as np
-from sklearn.datasets import make_regression, load_diabetes, make_classification
+from sklearn.datasets import make_regression, make_classification
 import matplotlib.pyplot as plt
+from sklearn.metrics import confusion_matrix, classification_report
+import seaborn as sns
+import pandas as pd
 
 
+def one_hot_encode(Y, num_classes=3):
+    
+    I = np.eye(num_classes)
+    
+    return I[Y]
+
+def plot_report(y, y_hat, labels):
+    """
+    
+    """
+    
+    cm = confusion_matrix(y, y_hat)
+    cr = classification_report(y, y_hat, output_dict=True)
+    
+    plt.figure(figsize=(20,10))
+    plt.subplot(121)
+    sns.heatmap(cm, annot=True)
+    plt.subplot(122)
+    sns.heatmap(pd.DataFrame(cr).iloc[:-1, :].T, annot=True)
 
 
 def generateBatches(trainx, trainy, batch_size=32, shuffle=True):
@@ -98,23 +119,8 @@ def show2Ddata(X, Y, W=None, b=None):
     
     plt.show()
 
-def one_hot_encode(y):
-    """
-    
 
-    Parameters
-    ----------
-    y : TYPE
-        DESCRIPTION.
-
-    Returns
-    -------
-    None.
-
-    """
-    pass
-
-def train(model:nn.Module, X, Y, Criterion, Optim=None, epochs=1000, verbose=False):
+def train(model, X, Y, Criterion, Optim=None, lr=1e-3, epochs=1000, verbose=False, print_every=100):
     """
     
 
@@ -137,7 +143,7 @@ def train(model:nn.Module, X, Y, Criterion, Optim=None, epochs=1000, verbose=Fal
     
     for epoch in range(epochs):
         
-        print(f"Epoch : {epoch}/{epochs})")
+        
 
         Yhat = model(X)
         
@@ -145,15 +151,16 @@ def train(model:nn.Module, X, Y, Criterion, Optim=None, epochs=1000, verbose=Fal
         
         losses.append(loss)
         
-        print(f"loss = {loss}")
+        if epoch % print_every == 0:
+            print(f"Epoch : {epoch}/{epochs}, loss = {loss}")
+            
         
-        dYhat = Criterion.backward(Y, Yhat)
         
         model.zero_grad()
         
-        print(dYhat.shape, X.shape)
+        dYhat = Criterion.backward(Y, Yhat)
         
-        model.backward_update_gradient(X, dYhat)
+        model.backward_update_gradient(X, dYhat, lr)
         
         
     return losses
