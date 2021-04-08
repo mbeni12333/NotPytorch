@@ -1,11 +1,16 @@
-from . import nn
 import numpy as np
-from sklearn.datasets import make_regression, load_diabetes, make_classification
+from sklearn.datasets import make_regression, make_classification
 import matplotlib.pyplot as plt
 from sklearn.metrics import confusion_matrix, classification_report
 import seaborn as sns
 import pandas as pd
 
+
+def one_hot_encode(Y, num_classes=3):
+    
+    I = np.eye(num_classes)
+    
+    return I[Y]
 
 def plot_report(y, y_hat, labels):
     """
@@ -114,23 +119,8 @@ def show2Ddata(X, Y, W=None, b=None):
     
     plt.show()
 
-def one_hot_encode(y):
-    """
-    
 
-    Parameters
-    ----------
-    y : TYPE
-        DESCRIPTION.
-
-    Returns
-    -------
-    None.
-
-    """
-    pass
-
-def train(model:nn.Module, X, Y, Criterion, Optim=None, epochs=1000, verbose=False, print_every=100):
+def train(model, X, Y, Criterion, Optim=None, lr=1e-3, epochs=1000, verbose=False, print_every=100):
     """
     
 
@@ -170,7 +160,7 @@ def train(model:nn.Module, X, Y, Criterion, Optim=None, epochs=1000, verbose=Fal
         
         dYhat = Criterion.backward(Y, Yhat)
         
-        model.backward_update_gradient(X, dYhat)
+        model.backward_update_gradient(X, dYhat, lr)
         
         
     return losses

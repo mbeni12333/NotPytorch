@@ -1,11 +1,14 @@
 import numpy as np
 import pickle as pk
-
+from .utils import one_hot_encode
 
 class F():
     
     def sigmoid(X):
         return 1.0 / (1.0 + np.exp(-X))
+    def softmax(X, dim=1):
+        tmp = np.exp(X)
+        return tmp/tmp.sum(dim, keepdims=True)
 
 
 class Loss(object):
@@ -53,6 +56,34 @@ class BCELoss(Loss):
         assert y.shape == yhat.shape
 
         yhat = 1.0 / (1.0 + np.exp(-yhat))
+
+        return yhat - y
+    
+    
+class CCELoss(Loss):
+
+    def __init__(self, eps=1e-10):
+        self.eps=eps
+
+    def forward(self, y, yhat):
+        
+        y = one_hot_encode(y.reshape(-1), yhat.shape[1]) 
+        
+        assert y.shape == yhat.shape
+        
+        yhat = F.softmax(yhat)
+        
+        return -(y*np.log(yhat)).sum(1).mean()
+        
+        #return -((y*yhat).sum(keepdims=True) + np.log(np.exp(yhat).sum(1, keepdims=True))).mean()
+
+    def backward(self, y, yhat):
+
+        y = one_hot_encode(y.reshape(-1), yhat.shape[1])        
+
+        assert y.shape == yhat.shape
+
+        yhat = F.softmax(yhat)
 
         return yhat - y
     
