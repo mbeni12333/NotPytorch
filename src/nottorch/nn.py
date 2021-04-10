@@ -3,6 +3,9 @@ import pickle as pk
 from .utils import one_hot_encode
 
 class F():
+    """
+    Functional static operations
+    """
     
     def sigmoid(X):
         return 1.0 / (1.0 + np.exp(-X))
@@ -12,6 +15,9 @@ class F():
 
 
 class Loss(object):
+    """
+    Base class for defining loss
+    """
     def forward(self, y, yhat):
         pass
 
@@ -23,26 +29,79 @@ class Loss(object):
 
 
 class MSELoss(Loss):
+    """
+    Mean Square Loss usefull for regression
+    """
 
     def __init__(self):
         return
 
-    def forward(self, y, yhat):
+    def forward(self, y:np.array, yhat:np.array):
+        """
+        
+
+        Parameters
+        ----------
+        y : np.array
+            True Labels
+        yhat : np.array
+            Predicted Labels
+
+        Returns
+        -------
+        float
+            return the mean square of the error
+
+        """
         return np.square(np.linalg.norm(y - yhat, axis=1)).mean()
 
-    def backward(self, y, yhat):
+    def backward(self, y:np.array, yhat:np.array):
+        """
+        Backward pass of the loss
 
+        Parameters
+        ----------
+        y : np.array
+            True labels
+        yhat : np.array
+            predicted labels
+
+        Returns
+        -------
+        TYPE
+           Gradient of the loss with respect to yhat
+
+        """
         assert y.shape == yhat.shape
 
         return 2*(yhat - y)
     
     
 class BCELoss(Loss):
+    """
+    Binary Cross Entropy loss usefull for binary classification
+    """
 
     def __init__(self, eps=1e-10):
         self.eps=eps
 
-    def forward(self, y, yhat):
+    def forward(self, y:np.array, yhat:np.array):
+        """
+        Expect yhat to be raw output of linear layer
+
+        Parameters
+        ----------
+        y : np.array
+            True Labels
+        yhat : np.array
+            output of last linear layer
+
+        Returns
+        -------
+        np.array
+            return Binary Cross Entropy
+
+        """
         
         assert y.shape == yhat.shape
         
@@ -51,7 +110,25 @@ class BCELoss(Loss):
         return -np.mean(y.T @ np.log(yhat+self.eps) +
                 (1-y).T @ np.log(1.0-yhat+self.eps))
 
-    def backward(self, y, yhat):
+    def backward(self, y:np.array, yhat:np.array) -> np.array:
+        """
+        Expects yhat to be raw output of the network, 
+        calculate directly the gradient with respect to the last layer
+        instead of multitpling dyhat*dz which introduces numerical instability
+
+        Parameters
+        ----------
+        y : np,array
+             
+        yhat : np.array
+            output of linear layer
+
+        Returns
+        -------
+        TYPE
+            return dZL last linear layer derivative
+
+        """
 
         assert y.shape == yhat.shape
 
@@ -61,11 +138,13 @@ class BCELoss(Loss):
     
     
 class CCELoss(Loss):
-
+    """
+    Categorical Cross Entropy loss, usefull for multiclass classification
+    """
     def __init__(self, eps=1e-10):
         self.eps=eps
 
-    def forward(self, y, yhat):
+    def forward(self, y:np.array, yhat:np.array) -> float:
         
         y = one_hot_encode(y.reshape(-1), yhat.shape[1]) 
         
@@ -77,7 +156,23 @@ class CCELoss(Loss):
         
         #return -((y*yhat).sum(keepdims=True) + np.log(np.exp(yhat).sum(1, keepdims=True))).mean()
 
-    def backward(self, y, yhat):
+    def backward(self, y:np.array, yhat:np.array):
+        """
+        Return directly dZL instead of multiploying dl/dyhat * dyhat/dZL which introduces numerical instability 
+
+        Parameters
+        ----------
+        y : np.array
+            raw labels (integers)
+        yhat : np.array
+            last linear layers output
+
+        Returns
+        -------
+        np.array
+            Gradient dZL last linear layer
+
+        """
 
         y = one_hot_encode(y.reshape(-1), yhat.shape[1])        
 
