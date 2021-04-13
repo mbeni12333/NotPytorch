@@ -85,7 +85,7 @@ def generateBatches(trainx:np.array, trainy:np.array, batch_size:int=32, shuffle
     
     
     data = [(trainx[indicies[i*batch_size:(i+1)*batch_size]].reshape(-1, trainx.shape[1]),
-             trainy[indicies[i*batch_size:(i+1)*batch_size]].reshape(-1, 1))
+             trainy[indicies[i*batch_size:(i+1)*batch_size]].reshape(-1, trainy.shape[1]))
                         
                         for i in range(len(indicies)//batch_size)]
     
@@ -341,7 +341,7 @@ def train(model,
           Criterion, Optim=None,
           lr:float=1e-3, epochs:int=1000,
           verbose:bool=False, print_every:int=100,
-          n_classe:int=2) -> :
+          n_classe:int=2) -> None:
     """
     Train a model using X, Y, and some criterion and optitimzer
 

@@ -246,20 +246,17 @@ import pandas as pd
 
 X, Y = utils.generate_classif(1000, n_clusters_per_class=1, n_classes=4)
 
-X2, Y2 = utils.generate_circles(1000, noise=0.1, factor=1)
+X2, Y2 = utils.generate_circles(1000, noise=0.1, factor=0.8)
 Y2 += 4
 
 X = np.vstack((X+2, X2-2))
 Y = np.vstack((Y, Y2))
-
-utils.show2DdataClassif(X, Y)
-plt.show()
  
-epochs = 10000
+epochs = 1000
 
 print_every = 100
-lr = 0.01
-cmap = "Set2"
+lr = 0.1
+cmap = "tab10"
 
 model = nn.Sequential([nn.Linear(7, 7),
                         nn.Tanh(),
@@ -311,3 +308,4 @@ for epoch in range(epochs):
 
       
 utils.plot_losses((losses))
+utils.plot_report(Y, Yhat, list(range(6)))
