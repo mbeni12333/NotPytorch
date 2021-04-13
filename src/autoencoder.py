@@ -95,8 +95,8 @@ testx = testx/(np.ptp(testx))
 epochs = 100
 Criterion = nn.BCELoss()
 model = Autoencoder(10)
-print_every = 10
-lr = 1e-3
+print_every = 300
+lr = 3e-3
 
 losses = []
 
@@ -112,13 +112,6 @@ for epoch in range(epochs):
         
         losses.append(loss)
         
-        if cpt % print_every == 0:
-            print(f"Epoch : {epoch}/{epochs}, batch {i}, loss = {loss}")
-            show_usps(X, trainy, rows=2, cols=6)
-            reconstruct = nn.F.sigmoid(model(X))
-            show_usps(reconstruct, trainy, rows=2, cols=6)
-        cpt += 1
-        
         
         model.zero_grad()
         
@@ -126,7 +119,35 @@ for epoch in range(epochs):
     
         model.backward_update_gradient(Yhat, dYhat, lr)
         
+        if cpt % print_every == 0:
+            print(f"Epoch : {epoch}/{epochs}, batch {i}, loss = {loss}")
+            #show_usps(X, trainy, rows=2, cols=6)
+            reconstruct = nn.F.sigmoid(model(trainx))
+            show_usps(reconstruct, trainy, rows=3, cols=6)
+        cpt += 1
+        
     
 # In[]
 plt.plot(losses)
 
+# In[]
+enc = model.encoder(trainx)
+
+
+idx2 = np.argmax(trainy == 0)
+
+for i in range(1, 10):
+    
+    idx1 = idx2
+    idx2 = np.argmax(trainy == i)
+    
+    start = enc[idx1].reshape(1, -1)
+    end = enc[idx2].reshape(1, -1)
+    
+    interpolation = start + (end - start)*np.linspace(0, 1, 50).reshape(-1, 1)
+    
+    reconstruct = nn.F.sigmoid(model.decoder(interpolation))
+
+
+    for i in range(50):
+        show_usps(reconstruct[i].reshape(1, -1), trainy, rows=1, cols=1)
