@@ -189,6 +189,7 @@ class Module(object):
         self._parameters = None
         self._gradients = None
         self._out = None
+        self.isTraining = True
 
     def zero_grad(self):
         # Annule gradient
@@ -208,10 +209,10 @@ class Module(object):
         pass
 
     def train(self):
-        pass
-
+        isTraining = True
+        
     def inference(self):
-        pass
+        isTraining = False
 
     def update_parameters(self, gradient_step=1e-3):
         # Calcule la mise a jour des parametres selon le gradient calcule et le pas de gradient_step
@@ -233,6 +234,15 @@ class Sequential(Module):
         self.layers = Modules
         self._out = {}
 
+
+    def train(self):
+        for i, layer in enumerate(self.layers):
+            layer.train()
+        
+    def inference(self):
+        for i, layer in enumerate(self.layers):
+            layer.inference()
+        
     def forward(self, X):
         self._out = {}
         self._out[-1] = X
@@ -395,3 +405,34 @@ class ReLU(Module):
     
     def update_parameters(self, gradient_step=1e-3):
         return
+    
+    
+class Dropout1D(Module):
+    """
+    Regularization layer
+    """
+    def __init__(self, proba=0.5):
+        super().__init__()
+        self.proba = proba
+
+    def forward(self, X):
+        if self.isTraining:
+            self.mask = np.random.rand(1, X.shape[1]) <= self.proba
+            return X*self.mask
+        return X
+            
+    def backward_update_gradient(self, input, grad_in, lr=1e-3):
+        grad_out = self.backward_delta(input, grad_in) 
+        return grad_out
+
+    def backward_delta(self, input, grad_in):
+         if self.isTraining:
+             return self.mask*grad_in
+         return grad_in
+    
+    def update_parameters(self, gradient_step=1e-3):
+        return
+    
+    
+    
+    

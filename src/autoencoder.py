@@ -22,17 +22,17 @@ class Autoencoder(nn.Module):
         
         self.encoder = nn.Sequential(
             [nn.Linear(256, 128),
-             nn.Tanh(),
+             nn.ReLU(),
              nn.Linear(128, 64),
-             nn.Tanh(),
+             nn.ReLU(),
              nn.Linear(64, bottleneck),
-             nn.Tanh()]
+             nn.ReLU()]
         )
         self.decoder = nn.Sequential(
             [nn.Linear(bottleneck, 64),
-             nn.Tanh(),
+             nn.ReLU(),
              nn.Linear(64, 128),
-             nn.Tanh(),
+             nn.ReLU(),
              nn.Linear(128, 256)]
         )
         
@@ -94,9 +94,9 @@ testx = testx/(np.ptp(testx))
 
 epochs = 100
 Criterion = nn.BCELoss()
-model = Autoencoder(10)
+model = Autoencoder(32)
 print_every = 300
-lr = 3e-3
+lr = 1e-3
 
 losses = []
 
@@ -104,13 +104,11 @@ cpt = 0
 
 for epoch in range(epochs):
     
-    for i, (X, Y) in enumerate(utils.generateBatches(trainx, trainx)):
+    for i, (X, Y) in enumerate(utils.generateBatches(trainx, trainx, batch_size=8)):
 
         Yhat = model(X)
         
         loss = Criterion(Y, Yhat)
-        
-        losses.append(loss)
         
         
         model.zero_grad()
@@ -122,6 +120,7 @@ for epoch in range(epochs):
         if cpt % print_every == 0:
             print(f"Epoch : {epoch}/{epochs}, batch {i}, loss = {loss}")
             #show_usps(X, trainy, rows=2, cols=6)
+            losses.append(loss)
             reconstruct = nn.F.sigmoid(model(trainx))
             show_usps(reconstruct, trainy, rows=3, cols=6)
         cpt += 1
@@ -131,23 +130,27 @@ for epoch in range(epochs):
 plt.plot(losses)
 
 # In[]
+# enc = model.encoder(trainx)
+
+
+# idx2 = np.argmax(trainy == 0)
+
+# for i in range(1, 10):
+    
+#     idx1 = idx2
+#     idx2 = np.argmax(trainy == i)
+    
+#     start = enc[idx1].reshape(1, -1)
+#     end = enc[idx2].reshape(1, -1)
+    
+#     interpolation = start + (end - start)*np.linspace(0, 1, 50).reshape(-1, 1)
+    
+#     reconstruct = nn.F.sigmoid(model.decoder(interpolation))
+
+
+#     for i in range(50):
+#         show_usps(reconstruct[i].reshape(1, -1), trainy, rows=1, cols=1)
+        
+# In[]
 enc = model.encoder(trainx)
-
-
-idx2 = np.argmax(trainy == 0)
-
-for i in range(1, 10):
-    
-    idx1 = idx2
-    idx2 = np.argmax(trainy == i)
-    
-    start = enc[idx1].reshape(1, -1)
-    end = enc[idx2].reshape(1, -1)
-    
-    interpolation = start + (end - start)*np.linspace(0, 1, 50).reshape(-1, 1)
-    
-    reconstruct = nn.F.sigmoid(model.decoder(interpolation))
-
-
-    for i in range(50):
-        show_usps(reconstruct[i].reshape(1, -1), trainy, rows=1, cols=1)
+plt.scatter(enc[:, 0], enc[:, 1], c=trainy)
