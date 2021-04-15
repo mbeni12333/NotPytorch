@@ -85,7 +85,7 @@ def generateBatches(trainx:np.array, trainy:np.array, batch_size:int=32, shuffle
     
     
     data = [(trainx[indicies[i*batch_size:(i+1)*batch_size]].reshape(-1, trainx.shape[1]),
-             trainy[indicies[i*batch_size:(i+1)*batch_size]].reshape(-1, 1))
+             trainy[indicies[i*batch_size:(i+1)*batch_size]].reshape(-1, trainy.shape[1]))
                         
                         for i in range(len(indicies)//batch_size)]
     
@@ -341,7 +341,8 @@ def train(model,
           Criterion, Optim=None,
           lr:float=1e-3, epochs:int=1000,
           verbose:bool=False, print_every:int=100,
-          n_classe:int=2) -> :
+          n_classe:int=2,
+          batch_size=64) -> None:
     """
     Train a model using X, Y, and some criterion and optitimzer
 
@@ -376,25 +377,29 @@ def train(model,
     """
     
     losses = []
+    cpt = 0
     
     for epoch in range(epochs):
         
+        for i, (batch, labels) in enumerate(generateBatches(X, Y, batch_size=batch_size)):
         
-
-        Yhat = model(X)
-        
-        loss = Criterion(Y, Yhat)
-        
-        losses.append(loss)
-        
-        if epoch % print_every == 0:
-            print(f"Epoch : {epoch}/{epochs}, loss = {loss}")
+    
+            Yhat = model(batch)
             
-        model.zero_grad()
-        
-        dYhat = Criterion.backward(Y, Yhat)
-        
-        model.backward_update_gradient(X, dYhat, lr)
+            loss = Criterion(labels, Yhat)
+            
+            
+            if cpt % print_every == 0:
+                print(f"Epoch : {epoch}/{epochs}, batch {i}, loss = {loss}")
+                losses.append(loss)
+                
+            model.zero_grad()
+            
+            dYhat = Criterion.backward(labels, Yhat)
+            
+            model.backward_update_gradient(batch, dYhat, lr)
+            
+            cpt += 1
         
         
     return losses
