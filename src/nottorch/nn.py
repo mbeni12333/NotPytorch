@@ -329,7 +329,67 @@ class Linear(Module):
         self._parameters["W"] -= gradient_step*self._gradients["W"]
         self._parameters["b"] -= gradient_step*self._gradients["b"]
         
+  
         
+  
+    
+class Conv1D(Module):
+
+    def __init__(self, k_size,chan_in=3, chan_out=32, stride=1):
+
+        super().__init__()
+
+        self._parameters = {}
+        self._gradients = {}
+        
+        self.k_size = k_size
+        self.chan_in = chan_in
+        self.chan_out = chan_out
+        
+        self._parameters["F"] = np.random.randn(self.chan_out,  self.chan_in, *k_size) * np.sqrt(2.0 / chan_in)
+        self._parameters["b"] = np.zeros(1, self.chan_out)
+
+    def forward(self, X):
+
+        b, c, h, w = X.shape        
+
+        F = self._parameters["F"]
+        b = self._parameters["b"]
+
+        
+    
+        sliding = np.lib.stride_tricks.sliding_window_view(X, window_shape=(1, self.chan_in, *(self.k)))
+        #sliding = sliding[:, :, ::self.stride[0], ::stride[1]]
+        
+        res = (sliding * F[None, :, None, None, None, :, :, :]).sum((4, 5, 6, 7))
+
+
+        return res
+
+    def zero_grad(self):
+        self._parameters["F"] = np.zeros_like(self._parameters["F"])
+        self._parameters["b"] = np.zeros_like(self._parameters["b"])
+        return
+
+    def backward_update_gradient(self, A, dZ, lr=1e-5):
+        dA = self.backward_delta(A, dZ)
+        self.update_parameters(lr)
+        
+        return dA
+
+    def backward_delta(self, inputs, grads_in):
+        
+        b, c, h, w = inputs.shape 
+        
+        return
+
+    def update_parameters(self, gradient_step=1e-3):
+
+        self._parameters["F"] -= gradient_step*self._gradients["F"]
+        self._parameters["b"] -= gradient_step*self._gradients["b"]
+    
+  
+
 
 
 class Sigmoid(Module):
@@ -432,6 +492,10 @@ class Dropout1D(Module):
     
     def update_parameters(self, gradient_step=1e-3):
         return
+    
+    
+    
+    
     
     
     

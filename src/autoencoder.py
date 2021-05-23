@@ -22,17 +22,17 @@ class Autoencoder(nn.Module):
         
         self.encoder = nn.Sequential(
             [nn.Linear(256, 128),
-             nn.ReLU(),
+             nn.Tanh(),
              nn.Linear(128, 64),
-             nn.ReLU(),
+             nn.Tanh(),
              nn.Linear(64, bottleneck),
-             nn.ReLU()]
+             nn.Tanh()]
         )
         self.decoder = nn.Sequential(
             [nn.Linear(bottleneck, 64),
-             nn.ReLU(),
+             nn.Tanh(),
              nn.Linear(64, 128),
-             nn.ReLU(),
+             nn.Tanh(),
              nn.Linear(128, 256)]
         )
         
@@ -92,11 +92,11 @@ testx = testx/(np.ptp(testx))
 
 # In[]
 
-epochs = 100
+epochs = 1000
 Criterion = nn.BCELoss()
-model = Autoencoder(32)
+model = Autoencoder(10)
 print_every = 300
-lr = 1e-3
+lr = 5e-4
 
 losses = []
 
@@ -104,7 +104,7 @@ cpt = 0
 
 for epoch in range(epochs):
     
-    for i, (X, Y) in enumerate(utils.generateBatches(trainx, trainx, batch_size=8)):
+    for i, (X, Y) in enumerate(utils.generateBatches(trainx, trainx, batch_size=64)):
 
         Yhat = model(X)
         
@@ -121,13 +121,19 @@ for epoch in range(epochs):
             print(f"Epoch : {epoch}/{epochs}, batch {i}, loss = {loss}")
             #show_usps(X, trainy, rows=2, cols=6)
             losses.append(loss)
-            reconstruct = nn.F.sigmoid(model(trainx))
-            show_usps(reconstruct, trainy, rows=3, cols=6)
+            reconstruct = nn.F.sigmoid(Yhat)
+            show_usps(reconstruct, Y, rows=2, cols=4)
+            
+            enc = model.encoder(testx)
+            plt.scatter(enc[:, 0], enc[:, 1], c=testy, cmap="tab10")
+            plt.show()
+            
         cpt += 1
         
     
 # In[]
 plt.plot(losses)
+plt.show()
 
 # In[]
 # enc = model.encoder(trainx)
@@ -150,7 +156,28 @@ plt.plot(losses)
 
 #     for i in range(50):
 #         show_usps(reconstruct[i].reshape(1, -1), trainy, rows=1, cols=1)
-        
+
+
 # In[]
+from sklearn.manifold import TSNE
+
 enc = model.encoder(trainx)
-plt.scatter(enc[:, 0], enc[:, 1], c=trainy)
+
+embd = TSNE(n_components=2).fit_transform(trainx)
+# In[]
+plt.scatter(embd[:, 0], embd[:, 1], c=trainy, cmap="tab10")
+plt.show()
+
+# In[]
+plt.scatter(enc[:, 0], enc[:, 1], c=trainy, cmap="tab10")
+plt.show()
+
+# In[]
+from sklearn.manifold import TSNE
+
+out = model(trainx)
+
+embd = TSNE(n_components=2).fit_transform(out)
+
+plt.scatter(embd[:, 0], embd[:, 1], c=trainy, cmap="tab10")
+plt.show()
