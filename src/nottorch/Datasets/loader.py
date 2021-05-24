@@ -79,9 +79,9 @@ def get_usps(l,datax,datay):
 def show_usps(X, Y, rows=4, cols=8):
            
     img = np.vstack(
-        np.hstack(
-            (X[(i*cols + j)].reshape(16, 16) for j in range(cols))
-        ) for i in range(rows)
+        tuple(np.hstack(
+            tuple(X[(i*cols + j)].reshape(16, 16) for j in range(cols))
+        ) for i in range(rows))
     )
 
 

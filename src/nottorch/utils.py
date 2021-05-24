@@ -1,11 +1,19 @@
+"""
+@author: Mounib Benimam
+"""
+
+
 import numpy as np
 from sklearn.datasets import make_regression, make_classification, make_circles
 import matplotlib.pyplot as plt
+import matplotlib
 from sklearn.metrics import confusion_matrix, classification_report
 import seaborn as sns
 import pandas as pd
 
 
+colors = np.array(['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd',
+          '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf'])
 
 def one_hot_encode(Y:np.array, num_classes:int=3) -> np.array:
     """
@@ -284,7 +292,8 @@ def plot_frontiere(data,f,step=200, n_classes=2, cmap="Set1"):
 
     """
     grid,x,y=make_grid(data=data,step=step)
-    plt.contourf(x,y,f(grid).reshape(x.shape),cmap=cmap,levels=n_classes, alpha=0.5)
+    out = f(grid).reshape(x.shape)
+    plt.contourf(x,y,out, colors=colors, vmin=0, vmax=10, alpha=0.3)
     plt.show()
 
 def show2DdataClassif(X, Y, cmap="Set1"):
@@ -305,8 +314,7 @@ def show2DdataClassif(X, Y, cmap="Set1"):
     None.
 
     """
-    plt.scatter(X[:, 0], X[:, 1], c=Y, cmap=cmap)    
-
+    plt.scatter(X[:, 0], X[:, 1], c=colors[Y].reshape(-1))    
 
 def show2Ddata(X, Y, W=None, b=None):
     """

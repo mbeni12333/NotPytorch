@@ -11,6 +11,8 @@ from src import nottorch
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+from sklearn.decomposition import PCA
+from sklearn.discriminant_analysis import LinearDiscriminantAnalysis as LDA
 
 
 
@@ -21,19 +23,15 @@ class Autoencoder(nn.Module):
         super().__init__()
         
         self.encoder = nn.Sequential(
-            [nn.Linear(256, 128),
+            [nn.Linear(256, 100),
              nn.Tanh(),
-             nn.Linear(128, 64),
-             nn.Tanh(),
-             nn.Linear(64, bottleneck),
+             nn.Linear(100, bottleneck),
              nn.Tanh()]
         )
         self.decoder = nn.Sequential(
-            [nn.Linear(bottleneck, 64),
+            [nn.Linear(bottleneck, 100),
              nn.Tanh(),
-             nn.Linear(64, 128),
-             nn.Tanh(),
-             nn.Linear(128, 256)]
+             nn.Linear(100, 256)]
         )
         
         
@@ -95,8 +93,8 @@ testx = testx/(np.ptp(testx))
 epochs = 1000
 Criterion = nn.BCELoss()
 model = Autoencoder(10)
-print_every = 300
-lr = 5e-4
+print_every = 1000
+lr = 1e-3
 
 losses = []
 
@@ -104,7 +102,7 @@ cpt = 0
 
 for epoch in range(epochs):
     
-    for i, (X, Y) in enumerate(utils.generateBatches(trainx, trainx, batch_size=64)):
+    for i, (X, Y) in enumerate(utils.generateBatches(trainx, trainx, batch_size=16)):
 
         Yhat = model(X)
         
@@ -125,6 +123,8 @@ for epoch in range(epochs):
             show_usps(reconstruct, Y, rows=2, cols=4)
             
             enc = model.encoder(testx)
+            enc = LDA(n_components=2).fit_transform(enc, testy.reshape(-1))
+            #enc = LDA(2).fit_transform(enc)
             plt.scatter(enc[:, 0], enc[:, 1], c=testy, cmap="tab10")
             plt.show()
             
